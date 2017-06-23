@@ -152,6 +152,7 @@
                     ppbtn = _react2.default.createElement(paypal.Button.react, {
                         env: this.props.env,
                         client: this.props.client,
+                        style: this.props.style,
                         payment: payment,
                         commit: true,
                         onAuthorize: onAuthorize,
@@ -172,7 +173,8 @@
     PaypalButton.propTypes = {
         currency: _propTypes2.default.string.isRequired,
         total: _propTypes2.default.number.isRequired,
-        client: _propTypes2.default.object.isRequired
+        client: _propTypes2.default.object.isRequired,
+        style: _propTypes2.default.object
     };
 
     PaypalButton.defaultProps = {
