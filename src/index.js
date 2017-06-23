@@ -20,7 +20,7 @@ class PaypalButton extends React.Component {
                     this.setState({ showButton: true });
                 } else {
                     console.log('Cannot load Paypal script!');
-                    this.props.onError();
+                    this.props.onError(new Error('Failed to initialize PayPal'));
                 }
             }
         }
@@ -43,15 +43,16 @@ class PaypalButton extends React.Component {
         }
 
         const onAuthorize = (data, actions) => {
-            return actions.payment.execute().then(() => {
-                const payment = Object.assign({}, this.props.payment);
-                payment.paid = true;
-                payment.cancelled = false;
-                payment.payerID = data.payerID;
-                payment.paymentID = data.paymentID;
-                payment.paymentToken = data.paymentToken;
-                payment.returnUrl = data.returnUrl;
-                this.props.onSuccess(payment);
+            return actions.payment.execute().then((payment) => {
+                this.props.onSuccess(payment)
+                // const payment = Object.assign({}, this.props.payment);
+                // payment.paid = true;
+                // payment.cancelled = false;
+                // payment.payerID = data.payerID;
+                // payment.paymentID = data.paymentID;
+                // payment.paymentToken = data.paymentToken;
+                // payment.returnUrl = data.returnUrl;
+                // this.props.onSuccess(payment);
             })
         }
 
@@ -65,6 +66,7 @@ class PaypalButton extends React.Component {
                 commit={true}
                 onAuthorize={onAuthorize}
                 onCancel={this.props.onCancel}
+                onError={this.props.onError}
             />
         }
         return <div>{ppbtn}</div>;

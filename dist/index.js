@@ -107,7 +107,7 @@
                             this.setState({ showButton: true });
                         } else {
                             console.log('Cannot load Paypal script!');
-                            this.props.onError();
+                            this.props.onError(new Error('Failed to initialize PayPal'));
                         }
                     }
                 }
@@ -135,15 +135,16 @@
                 };
 
                 var onAuthorize = function onAuthorize(data, actions) {
-                    return actions.payment.execute().then(function () {
-                        var payment = Object.assign({}, _this2.props.payment);
-                        payment.paid = true;
-                        payment.cancelled = false;
-                        payment.payerID = data.payerID;
-                        payment.paymentID = data.paymentID;
-                        payment.paymentToken = data.paymentToken;
-                        payment.returnUrl = data.returnUrl;
+                    return actions.payment.execute().then(function (payment) {
                         _this2.props.onSuccess(payment);
+                        // const payment = Object.assign({}, this.props.payment);
+                        // payment.paid = true;
+                        // payment.cancelled = false;
+                        // payment.payerID = data.payerID;
+                        // payment.paymentID = data.paymentID;
+                        // payment.paymentToken = data.paymentToken;
+                        // payment.returnUrl = data.returnUrl;
+                        // this.props.onSuccess(payment);
                     });
                 };
 
@@ -156,7 +157,8 @@
                         payment: payment,
                         commit: true,
                         onAuthorize: onAuthorize,
-                        onCancel: this.props.onCancel
+                        onCancel: this.props.onCancel,
+                        onError: this.props.onError
                     });
                 }
                 return _react2.default.createElement(
