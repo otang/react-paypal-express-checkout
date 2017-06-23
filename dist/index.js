@@ -1,16 +1,16 @@
 (function (global, factory) {
     if (typeof define === "function" && define.amd) {
-        define(['exports', 'react', 'react-dom', 'react-async-script-loader', 'prop-types'], factory);
+        define(['exports', 'react', 'react-dom', 'prop-types'], factory);
     } else if (typeof exports !== "undefined") {
-        factory(exports, require('react'), require('react-dom'), require('react-async-script-loader'), require('prop-types'));
+        factory(exports, require('react'), require('react-dom'), require('prop-types'));
     } else {
         var mod = {
             exports: {}
         };
-        factory(mod.exports, global.react, global.reactDom, global.reactAsyncScriptLoader, global.propTypes);
+        factory(mod.exports, global.react, global.reactDom, global.propTypes);
         global.index = mod.exports;
     }
-})(this, function (exports, _react, _reactDom, _reactAsyncScriptLoader, _propTypes) {
+})(this, function (exports, _react, _reactDom, _propTypes) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
@@ -20,8 +20,6 @@
     var _react2 = _interopRequireDefault(_react);
 
     var _reactDom2 = _interopRequireDefault(_reactDom);
-
-    var _reactAsyncScriptLoader2 = _interopRequireDefault(_reactAsyncScriptLoader);
 
     var _propTypes2 = _interopRequireDefault(_propTypes);
 
@@ -79,64 +77,86 @@
         if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
     }
 
+    console.log('loading react-paypal-express-checkout...');
+
     var PaypalButton = function (_React$Component) {
         _inherits(PaypalButton, _React$Component);
 
         function PaypalButton(props) {
             _classCallCheck(this, PaypalButton);
 
-            var _this = _possibleConstructorReturn(this, (PaypalButton.__proto__ || Object.getPrototypeOf(PaypalButton)).call(this, props));
+            var _this2 = _possibleConstructorReturn(this, (PaypalButton.__proto__ || Object.getPrototypeOf(PaypalButton)).call(this, props));
 
-            window.React = _react2.default;
-            window.ReactDOM = _reactDom2.default;
-            _this.state = {
-                showButton: false
+            _this2.state = {
+                paypalLoaded: _this2.paypalIsLoaded()
             };
-            return _this;
+
+            console.log('constructor()');
+
+            _this2.waitForPaypal().then(function () {
+                console.log('promise resolved!!');
+                console.log('window.paypal.Button.react: ');
+                console.log(window.paypal.Button.react);
+                _this2.setState({ paypalLoaded: true });
+            });
+            return _this2;
         }
 
         _createClass(PaypalButton, [{
-            key: 'componentWillReceiveProps',
-            value: function componentWillReceiveProps(_ref) {
-                var isScriptLoaded = _ref.isScriptLoaded,
-                    isScriptLoadSucceed = _ref.isScriptLoadSucceed;
+            key: 'waitForPaypal',
+            value: function waitForPaypal() {
+                var _this3 = this;
 
-                if (!this.state.show) {
-                    if (isScriptLoaded && !this.props.isScriptLoaded) {
-                        if (isScriptLoadSucceed) {
-                            this.setState({ showButton: true });
-                        } else {
-                            console.log('Cannot load Paypal script!');
-                            this.props.onError(new Error('Failed to initialize PayPal'));
+                console.log('waitForPaypal()');
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    console.log('promise');
+                    if (_this3.paypalIsLoaded()) return resolve();
+
+                    //#todo - timeout: this.props.onError(new Error('Failed to initialize PayPal'));
+
+                    _this.waitForPaypalInterval = setInterval(function () {
+                        console.log('Waiting for paypal...');
+                        if (_this3.paypalIsLoaded()) {
+                            clearInterval(_this.waitForPaypalInterval);
+                            resolve();
                         }
-                    }
-                }
+                    }, 200);
+                });
             }
         }, {
-            key: 'componentDidMount',
-            value: function componentDidMount() {
-                var _props = this.props,
-                    isScriptLoaded = _props.isScriptLoaded,
-                    isScriptLoadSucceed = _props.isScriptLoadSucceed;
-
-                if (isScriptLoaded && isScriptLoadSucceed) {
-                    this.setState({ showButton: true });
+            key: 'paypalIsLoaded',
+            value: function paypalIsLoaded() {
+                if (window.paypal && window.paypal.Button && window.paypal.Button.react) {
+                    return true;
+                } else {
+                    return false;
                 }
             }
         }, {
             key: 'render',
             value: function render() {
-                var _this2 = this;
+                var _this4 = this;
+
+                if (!this.state.paypalLoaded) {
+                    return _react2.default.createElement(
+                        'p',
+                        null,
+                        'loading...'
+                    );
+                    return null;
+                    // #todo - loader
+                }
 
                 var payment = function payment() {
-                    return paypal.rest.payment.create(_this2.props.env, _this2.props.client, {
-                        transactions: [{ amount: { total: _this2.props.total, currency: _this2.props.currency } }]
+                    return paypal.rest.payment.create(_this4.props.env, _this4.props.client, {
+                        transactions: [{ amount: { total: _this4.props.total, currency: _this4.props.currency } }]
                     });
                 };
 
                 var onAuthorize = function onAuthorize(data, actions) {
                     return actions.payment.execute().then(function (payment) {
-                        _this2.props.onSuccess(payment);
+                        _this4.props.onSuccess(payment);
                         // const payment = Object.assign({}, this.props.payment);
                         // payment.paid = true;
                         // payment.cancelled = false;
@@ -149,18 +169,16 @@
                 };
 
                 var ppbtn = '';
-                if (this.state.showButton) {
-                    ppbtn = _react2.default.createElement(paypal.Button.react, {
-                        env: this.props.env,
-                        client: this.props.client,
-                        style: this.props.style,
-                        payment: payment,
-                        commit: true,
-                        onAuthorize: onAuthorize,
-                        onCancel: this.props.onCancel,
-                        onError: this.props.onError
-                    });
-                }
+                ppbtn = _react2.default.createElement(paypal.Button.react, {
+                    env: this.props.env,
+                    client: this.props.client,
+                    style: this.props.style,
+                    payment: payment,
+                    commit: true,
+                    onAuthorize: onAuthorize,
+                    onCancel: this.props.onCancel,
+                    onError: this.props.onError
+                });
                 return _react2.default.createElement(
                     'div',
                     null,
@@ -198,5 +216,5 @@
         }
     };
 
-    exports.default = (0, _reactAsyncScriptLoader2.default)('https://www.paypalobjects.com/api/checkout.js')(PaypalButton);
+    exports.default = PaypalButton;
 });

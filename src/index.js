@@ -1,39 +1,63 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import scriptLoader from 'react-async-script-loader';
+// import scriptLoader from 'react-async-script-loader';
 import PropTypes from 'prop-types';
+
+console.log('loading react-paypal-express-checkout...')
 
 class PaypalButton extends React.Component {
     constructor(props) {
-        super(props);
-        window.React = React;
-        window.ReactDOM = ReactDOM;
-        this.state = {
-            showButton: false
-        }
+      super(props);
+      this.state = {
+        paypalLoaded: this.paypalIsLoaded(),
+      }
+
+      console.log('constructor()')
+
+      this.waitForPaypal().then(() => {
+        console.log('promise resolved!!')
+        console.log('window.paypal.Button.react: ')
+        console.log(window.paypal.Button.react)
+        this.setState({paypalLoaded: true})
+      })
     }
 
-    componentWillReceiveProps ({ isScriptLoaded, isScriptLoadSucceed }) {
-        if (!this.state.show) {
-            if (isScriptLoaded && !this.props.isScriptLoaded) {
-                if (isScriptLoadSucceed) {
-                    this.setState({ showButton: true });
-                } else {
-                    console.log('Cannot load Paypal script!');
-                    this.props.onError(new Error('Failed to initialize PayPal'));
-                }
-            }
-        }
+    waitForPaypal() {
+        console.log('waitForPaypal()')
+        const _this = this;
+        return new Promise((resolve, reject) => {
+            console.log('promise')
+            if(this.paypalIsLoaded()) return resolve();
+
+            //#todo - timeout: this.props.onError(new Error('Failed to initialize PayPal'));
+
+            _this.waitForPaypalInterval = setInterval(() => {
+                console.log('Waiting for paypal...')
+                if(this.paypalIsLoaded()) {
+                    clearInterval(_this.waitForPaypalInterval);
+                    resolve();
+                  }
+            }, 200)
+        })
     }
 
-    componentDidMount() {
-        const { isScriptLoaded, isScriptLoadSucceed } = this.props;
-        if (isScriptLoaded && isScriptLoadSucceed) {
-            this.setState({ showButton: true });
-        }
+    paypalIsLoaded() {
+      if(window.paypal && window.paypal.Button && window.paypal.Button.react) {
+        return true;
+      } else {
+        return false;
+      }
     }
 
     render() {
+        if( !this.state.paypalLoaded) {
+            return <p>loading...</p>;
+            return null;
+            // #todo - loader
+
+        }
+
+
         let payment = () => {
             return paypal.rest.payment.create(this.props.env, this.props.client, {
                 transactions: [
@@ -57,18 +81,16 @@ class PaypalButton extends React.Component {
         }
 
         let ppbtn = '';
-        if (this.state.showButton) {
-            ppbtn = <paypal.Button.react
-                env={this.props.env}
-                client={this.props.client}
-                style={this.props.style}
-                payment={payment}
-                commit={true}
-                onAuthorize={onAuthorize}
-                onCancel={this.props.onCancel}
-                onError={this.props.onError}
-            />
-        }
+        ppbtn = <paypal.Button.react
+            env={this.props.env}
+            client={this.props.client}
+            style={this.props.style}
+            payment={payment}
+            commit={true}
+            onAuthorize={onAuthorize}
+            onCancel={this.props.onCancel}
+            onError={this.props.onError}
+        />
         return <div>{ppbtn}</div>;
     }
 }
@@ -99,4 +121,4 @@ PaypalButton.defaultProps = {
     }
 };
 
-export default scriptLoader('https://www.paypalobjects.com/api/checkout.js')(PaypalButton);
+export default PaypalButton;
