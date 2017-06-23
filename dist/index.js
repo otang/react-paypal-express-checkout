@@ -176,11 +176,17 @@
         currency: _propTypes2.default.string.isRequired,
         total: _propTypes2.default.number.isRequired,
         client: _propTypes2.default.object.isRequired,
-        style: _propTypes2.default.object
+        style: _propTypes2.default.object,
+
+        label: _propTypes2.default.oneOf(['checkout', 'credit', 'pay']),
+        size: _propTypes2.default.oneOf(['small', 'medium', 'responsive'])
     };
 
     PaypalButton.defaultProps = {
         env: 'sandbox',
+        label: 'checkout',
+        size: 'responsive',
+
         onSuccess: function onSuccess(payment) {
             console.log('The payment was succeeded!', payment);
         },

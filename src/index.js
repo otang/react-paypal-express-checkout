@@ -78,10 +78,16 @@ PaypalButton.propTypes = {
     total: PropTypes.number.isRequired,
     client: PropTypes.object.isRequired,
     style: PropTypes.object,
+
+    label: PropTypes.oneOf(['checkout', 'credit', 'pay']),
+    size: PropTypes.oneOf(['small', 'medium', 'responsive']),
 }
 
 PaypalButton.defaultProps = {
     env: 'sandbox',
+    label: 'checkout',
+    size: 'responsive',
+
     onSuccess: (payment) => {
         console.log('The payment was succeeded!', payment);
     },
